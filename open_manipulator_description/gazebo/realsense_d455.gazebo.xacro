@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+
+<!--
+This is the Gazebo URDF model for the Intel RealSense D455 camera
+Using native Gazebo sensors without external plugins
+-->
+
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="gazebo_d455" params="reference_link
+                                          camera_name:=camera
+                                          topics_ns:=camera
+
+                                          depth_optical_frame
+                                          color_optical_frame
+
+                                          clip_distance:=6.0
+                                          depth_width:=640
+                                          depth_height:=480
+                                          depth_fps:=30
+
+                                          color_width:=640
+                                          color_height:=480
+                                          color_fps:=30
+
+                                          enable_pointCloud:=true
+                                          visualize:=false
+                                          ">
+
+    <!-- Load parameters to model's main link-->
+    <xacro:property name="deg_to_rad" value="0.01745329251994329577"/>
+    
+    <!-- Color camera on color_optical_frame -->
+    <gazebo reference="${color_optical_frame}">
+      <sensor name="${camera_name}color" type="camera">
+        <pose>0 0 0 0 0 0</pose>
+        <camera name="${camera_name}color">
+          <horizontal_fov>${86*deg_to_rad}</horizontal_fov>
+          <image>
+            <width>${color_width}</width>
+            <height>${color_height}</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>100</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.007</stddev>
+          </noise>
+          <lens>
+            <intrinsics>
+              <fx>615</fx>
+              <fy>615</fy>
+              <cx>320</cx>
+              <cy>240</cy>
+              <s>0</s>
+            </intrinsics>
+          </lens>
+        </camera>
+        <always_on>1</always_on>
+        <update_rate>${color_fps}</update_rate>
+        <visualize>${visualize}</visualize>
+        <topic>${topics_ns}/color/image_raw</topic>
+      </sensor>
+    </gazebo>
+    
+    <!-- Depth camera on depth_optical_frame -->
+    <gazebo reference="${depth_optical_frame}">
+      <sensor name="${camera_name}depth" type="depth_camera">
+        <pose>0 0 0 0 0 0</pose>
+        <camera name="${camera_name}depth">
+          <horizontal_fov>${90*deg_to_rad}</horizontal_fov>
+          <image>
+            <width>${depth_width}</width>
+            <height>${depth_height}</height>
+            <format>R_FLOAT32</format>
+          </image>
+          <clip>
+            <near>0.4</near>
+            <far>${clip_distance}</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.01</stddev>
+          </noise>
+          <lens>
+            <intrinsics>
+              <fx>385</fx>
+              <fy>385</fy>
+              <cx>320</cx>
+              <cy>240</cy>
+              <s>0</s>
+            </intrinsics>
+          </lens>
+        </camera>
+        <always_on>1</always_on>
+        <update_rate>${depth_fps}</update_rate>
+        <visualize>false</visualize>
+        <topic>${topics_ns}/depth/image_raw</topic>
+      </sensor>
+    </gazebo>
+
+    <!-- RGBD Camera for point cloud -->
+    <xacro:if value="${enable_pointCloud}">
+      <gazebo reference="${depth_optical_frame}">
+        <sensor name="${camera_name}rgbd" type="rgbd_camera">
+          <pose>0 0 0 0 0 0</pose>
+          <camera name="${camera_name}rgbd">
+            <horizontal_fov>${86*deg_to_rad}</horizontal_fov>
+            <image>
+              <width>${depth_width}</width>
+              <height>${depth_height}</height>
+              <format>R8G8B8</format>
+            </image>
+            <clip>
+              <near>0.4</near>
+              <far>${clip_distance}</far>
+            </clip>
+            <depth_camera>
+              <clip>
+                <near>0.4</near>
+                <far>${clip_distance}</far>
+              </clip>
+            </depth_camera>
+            <lens>
+              <intrinsics>
+                <fx>385</fx>
+                <fy>385</fy>
+                <cx>320</cx>
+                <cy>240</cy>
+                <s>0</s>
+              </intrinsics>
+            </lens>
+          </camera>
+          <always_on>1</always_on>
+          <update_rate>${depth_fps}</update_rate>
+          <visualize>false</visualize>
+          <topic>${topics_ns}/rgbd</topic>
+        </sensor>
+      </gazebo>
+    </xacro:if>
+
+  </xacro:macro>
+</robot>

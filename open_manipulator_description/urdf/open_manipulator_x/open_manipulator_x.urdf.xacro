@@ -6,12 +6,16 @@
   <xacro:arg name="fake_sensor_commands" default="false" />
   <xacro:arg name="port_name" default="/dev/ttyUSB0" />
   <xacro:arg name="ros2_control_type" default="open_manipulator_x_position" />
+  <xacro:arg name="add_camera" default="true" />
 
   <xacro:include filename="$(find open_manipulator_description)/gazebo/open_manipulator_x.gazebo.xacro" />
 
   <xacro:include filename="$(find open_manipulator_description)/urdf/open_manipulator_x/open_manipulator_x_arm.urdf.xacro" />
 
   <xacro:include filename="$(find open_manipulator_description)/ros2_control/$(arg ros2_control_type).ros2_control.xacro" />
+
+  <!-- Include RealSense D455 camera -->
+  <xacro:include filename="$(find open_manipulator_description)/urdf/open_manipulator_x/realsense_d455.urdf.xacro" />
 
   <link name="world"/>
 
@@ -29,6 +33,13 @@
     use_fake_hardware="$(arg use_fake_hardware)"
     fake_sensor_commands="$(arg fake_sensor_commands)"
     port_name="$(arg port_name)"/>
+
+  <!-- Add RealSense D455 Camera -->
+  <xacro:if value="$(arg add_camera)">
+    <xacro:sensor_d455 parent="$(arg prefix)camera_mount_link" name="$(arg prefix)d455" topics_ns="d455" enable_pointCloud="true">
+      <origin xyz="0 0 0.01" rpy="0 0 0"/>
+    </xacro:sensor_d455>
+  </xacro:if>
 
   <gazebo>
     <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">

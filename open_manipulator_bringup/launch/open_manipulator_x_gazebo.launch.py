@@ -55,6 +55,9 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'world', default_value='empty_world', description='Gz sim World'
         ),
+        DeclareLaunchArgument(
+            'add_camera', default_value='true', description='Add RealSense D455 camera to the arm'
+        ),
     ])
 
     gazebo = IncludeLaunchDescription(
@@ -63,7 +66,12 @@ def generate_launch_description():
             '/gz_sim.launch.py',
         ]),
         launch_arguments=[
-            ('gz_args', [LaunchConfiguration('world'), '.sdf', ' -v 1', ' -r'])
+            ('gz_args', [
+                LaunchConfiguration('world'), '.sdf', 
+                ' -v 1', 
+                ' -r',
+                ' --render-engine', ' ogre2',
+            ])
         ],
     )
 
@@ -74,7 +82,13 @@ def generate_launch_description():
         'open_manipulator_x.urdf.xacro',
     )
 
-    doc = xacro.process_file(xacro_file, mappings={'use_sim': 'true'})
+    doc = xacro.process_file(
+        xacro_file, 
+        mappings={
+            'use_sim': 'true',
+            'add_camera': 'true'
+        }
+    )
 
     robot_desc = doc.toprettyxml(indent='  ')
 
@@ -148,6 +162,22 @@ def generate_launch_description():
         output='screen',
     )
 
+    # Camera topic bridges for RealSense D455
+    camera_bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        arguments=[
+            '/d455/color/image_raw@sensor_msgs/msg/Image[gz.msgs.Image',
+            '/d455/color/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo',
+            '/d455/depth/image_raw@sensor_msgs/msg/Image[gz.msgs.Image',
+            '/d455/depth/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo',
+            '/d455/rgbd/image@sensor_msgs/msg/Image[gz.msgs.Image',
+            '/d455/rgbd/depth_image@sensor_msgs/msg/Image[gz.msgs.Image',
+            '/d455/rgbd/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked',
+        ],
+        output='screen',
+    )
+
     # rviz_config_file = os.path.join(
     #     open_manipulator_description_path, 'rviz', 'open_manipulator.rviz'
     # )
@@ -174,6 +204,7 @@ def generate_launch_description():
             )
         ),
         bridge,
+        camera_bridge,
         gazebo_resource_path,
         arguments,
         gazebo,

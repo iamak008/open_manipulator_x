@@ -1,69 +1,41 @@
+version: "3.9"
 services:
-  open_manipulator_vnc:
-    container_name: open_manipulator_vnc
+  omx_vnc:
+    container_name: omx_vnc
     build:
       context: .
       dockerfile: Dockerfile
-      shm_size: '2gb'
-    image: robotis/open-manipulator-vnc:jazzy
-    tty: true
-    stdin_open: true
+    image: omx_vnc:jazzy
     restart: unless-stopped
-    
-    # Port mapping for noVNC browser access
+    shm_size: "4g"
+    security_opt:
+      - seccomp:unconfined
+
+    # Bridge mode + explicit port so you visit http://localhost:6080
     ports:
-      - "6080:80"      # noVNC web interface
-      - "5900:5900"    # VNC direct access (optional)
-    
-    # Security and performance settings
-    cap_add:
-      - SYS_NICE
-    ulimits:
-      rtprio: 99
-      rttime: -1
-      memlock: 8428281856
-    security-opt:
-      - seccomp=unconfined
-    
-    # Shared memory for Gazebo performance
-    shm_size: '4gb'
-    
-    # Environment variables
+      - "6080:80"
+
+    # GPU passthrough (requires nvidia-container-toolkit on host)
+    gpus: all
+
+    # USB passthrough (broad but convenient)
+    privileged: true
+    devices:
+      - "/dev:/dev"
+      # Add specific serials if needed:
+      # - "/dev/ttyUSB0:/dev/ttyUSB0"
+      # - "/dev/ttyACM0:/dev/ttyACM0"
+
     environment:
-      - RESOLUTION=1440x900          # VNC resolution
+      - RESOLUTION=1440x900
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
       - ROS_DOMAIN_ID=42
-      - USER=ubuntu
-      - PASSWORD=ubuntu              # Change this for security!
-      - HTTP_PASSWORD=ubuntu         # Change this for security!
-      # NVIDIA GPU passthrough (optional)
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=compute,graphics,utility
-    
-    # Volume mounts
+      # Ensure discovery across processes (inside the container)
+      - ROS_LOCALHOST_ONLY=0
+
     volumes:
-      # Persist workspace on host
-      - ./workspace:/home/ubuntu/omx_ws/:rw
-      # Persist logs on host
-      - ./logs:/home/ubuntu/logs:rw
-      # USB device access (for U2D2 / real hardware)
+      # Persist your workspace + logs on the host
       - /dev:/dev
-    # GPU device exposure
-    # - /dev/dri for Intel/AMD DRM (VA-API) and GPUs
-    devices:
-      - "/dev/dri:/dev/dri"
-    # For NVIDIA support you may need the nvidia runtime / container toolkit on the host
-    # and the runtime/device_requests below (runtime is a hint; device_requests preferred by modern Compose)
-    runtime: nvidia
-    device_requests:
-      - driver: nvidia
-        count: all
-        capabilities: [gpu]
-    
-    # Required for USB device access (U2D2, cameras)
-    privileged: true
-    
-    # Network mode for ROS 2 DDS communication
-    network_mode: host
-    
-    command: bash -c "sudo service supervisor start && tail -f /dev/null"
+      - ./workspace:/workspace
+      - ~/robotics/omx_vnc_ws:/home/ubuntu/omx_ws
+      - ~/robotics/omx_logs:/home/ubuntu/logs

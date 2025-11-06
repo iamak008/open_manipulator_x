@@ -36,6 +36,6 @@ services:
     volumes:
       # Persist your workspace + logs on the host
       - /dev:/dev
-      - ./workspace:/workspace
+      - ./workspace:/home/ubuntu/workspace
       - ~/robotics/omx_vnc_ws:/home/ubuntu/omx_ws
       - ~/robotics/omx_logs:/home/ubuntu/logs

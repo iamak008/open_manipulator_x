@@ -9,7 +9,7 @@ set -e
 
 # Get the directory where the script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-CONTAINER_NAME="open_manipulator_vnc"
+CONTAINER_NAME="omx_vnc"
 COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.yml"
 VNC_PORT="6080"
 VNC_URL="http://localhost:${VNC_PORT}"
